@@ -38,8 +38,13 @@ describe Elasticsearch::IndexStager do
     stager.promote
     ESHelper.refresh(stager.index_name)
 
-    aliases = ESHelper.client.indices.get_aliases(index: stager.index_name)
+    aliases = ESHelper.client.indices.get_aliases(index: stager.index_name, name: '*')
     expect(aliases.keys[0]).to eq stager.tmp_index_name
+
+    # the original was saved
+    orig_name = stager.index_name + '-pre-staged-original'
+    resp = ESHelper.client.search(index: orig_name, body: { query: { match: { title: 'test' } } } )
+    expect(resp['hits']['total']).to eq 2
   end
 
   def create_index(index_name)
