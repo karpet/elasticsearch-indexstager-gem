@@ -9,4 +9,10 @@ test2:
 
 test: test6
 
-.PHONY: test test5 test6 test2
+dist:
+	gem build elasticsearch-indexstager.gemspec
+
+setup:
+	bundle install
+
+.PHONY: test test5 test6 test2 dist
