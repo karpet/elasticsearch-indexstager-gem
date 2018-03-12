@@ -5,15 +5,12 @@ matrix:
   include:
     - rvm: 2.3.3
       jdk: oraclejdk8
-      env: PATH=/tmp/elasticsearch-6.0.0/bin/elasticsearch:${PATH}
 
     - rvm: 2.2.6
       jdk: oraclejdk8
-      env: PATH=/tmp/elasticsearch-6.0.0/bin/elasticsearch:${PATH}
 
     - rvm: 2.4.0
       jdk: oraclejdk8
-      env: PATH=/tmp/elasticsearch-6.0.0/bin/elasticsearch:${PATH}
 
 before_install:
   - gem update --system
@@ -26,4 +23,4 @@ install:
   - bundle install
 
 script:
-  - make travis
+  - make test
