@@ -80,6 +80,7 @@ module Elasticsearch
     def rename_live_index
       # if the live index exists but is empty, it fill fail to reindex (rename)
       # so catch that case and just delete it.
+      es_client.indices.refresh index: @live_index_name rescue false
       idx_stats = es_client.indices.stats index: @live_index_name, docs: true
       num_docs = idx_stats['indices'][@live_index_name]['total']['docs']['count']
       if num_docs.to_i == 0
