@@ -1,12 +1,12 @@
 # elasticsearch-indexstager RubyGem
 
-[![Build Status](https://travis-ci.org/18F/elasticsearch-indexstager-gem.svg?branch=master)](https://travis-ci.org/18F/elasticsearch-indexstager-gem)
+[![Build Status](https://travis-ci.org/karpet/elasticsearch-indexstager-gem.svg?branch=master)](https://travis-ci.org/karpet/elasticsearch-indexstager-gem)
 
 Elasticsearch index management, for stage/promote pattern.
 
 See also:
 
-* [elasticsearch-rails-ha](https://github.com/18F/elasticsearch-rails-ha)
+* [elasticsearch-rails-ha](https://github.com/karpet/elasticsearch-rails-ha)
 
 ## Examples
 
