@@ -66,8 +66,19 @@ module Elasticsearch
 
       if live_index_exists
         new_name = @live_index_name + '-pre-staged-original'
+
         # make a copy
         es_client.reindex body: { source: { index: @live_index_name }, dest: { index: new_name } }
+
+        # make sure the copy exists before we delete the original
+        tries = 0
+        while( tries < 10 ) do
+          indices = ESHelper.client.indices.get_aliases.keys
+          break if indices.include?(new_name)
+          tries =+ 1
+          sleep(1)
+        end
+
         # delete the original
         es_client.indices.delete index: @live_index_name rescue false
       end
