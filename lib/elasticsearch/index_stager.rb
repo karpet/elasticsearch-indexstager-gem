@@ -2,7 +2,7 @@ require 'securerandom'
 
 module Elasticsearch
   class IndexStager
-    VERSION = '1.1.0'
+    VERSION = '1.1.1'
 
     attr_reader :index_name, :es_client
 
@@ -75,7 +75,7 @@ module Elasticsearch
         while( tries < 10 ) do
           indices = ESHelper.client.indices.get_aliases.keys
           break if indices.include?(new_name)
-          tries =+ 1
+          tries += 1
           sleep(1)
         end
 
