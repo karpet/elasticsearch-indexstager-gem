@@ -1,9 +1,29 @@
+dist: trusty
+sudo: required
 language: ruby
-rvm:
-  - 2.0
-  - 2.1
-  - 2.2
-  - 2.3
-  - 2.4
-services:
-  - elasticsearch
+matrix:
+  include:
+    - rvm: 2.3.3
+      jdk: oraclejdk8
+      env: PATH=/tmp/elasticsearch-6.0.0/bin/elasticsearch:${PATH}
+
+    - rvm: 2.2.6
+      jdk: oraclejdk8
+      env: PATH=/tmp/elasticsearch-6.0.0/bin/elasticsearch:${PATH}
+
+    - rvm: 2.4.0
+      jdk: oraclejdk8
+      env: PATH=/tmp/elasticsearch-6.0.0/bin/elasticsearch:${PATH}
+
+before_install:
+  - gem update --system
+  - gem --version
+  - gem install bundler -v 1.14.3
+  - bundle version
+  - curl -sS https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.0.0.tar.gz | tar xz -C /tmp
+
+install:
+  - bundle install
+
+script:
+  - make travis
