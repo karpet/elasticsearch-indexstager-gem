@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   ]
   s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
 
-  #s.add_runtime_dependency 'elasticsearch', '~> 6.0'
+  s.add_runtime_dependency 'elasticsearch', '~> 6.0'
 
   s.required_ruby_version = ">= 1.9.3"
   s.add_development_dependency "bundler", "~> 1.3"
