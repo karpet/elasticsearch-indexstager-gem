@@ -2,7 +2,7 @@ require 'securerandom'
 
 module Elasticsearch
   class IndexStager
-    VERSION = '1.1.2'
+    VERSION = '1.1.3'
 
     attr_reader :index_name, :es_client
 
