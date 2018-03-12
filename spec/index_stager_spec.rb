@@ -5,7 +5,6 @@ describe Elasticsearch::IndexStager do
 
   def delete_all_indices
     indices = ESHelper.client.indices.get_aliases
-    pp indices
     ESHelper.client.indices.delete(index: indices.keys) if indices.keys.any?
   end
 
