@@ -78,16 +78,26 @@ module Elasticsearch
     private
 
     def rename_live_index
+      # if the live index exists but is empty, it fill fail to reindex (rename)
+      # so catch that case and just delete it.
+      idx_stats = es_client.indices.stats index: @live_index_name, docs: true
+      num_docs = idx_stats['indices'][@live_index_name]['total']['docs']['count']
+      if num_docs.to_i == 0
+        es_client.indices.delete index: @live_index_name
+        return
+      end
+
       new_name = @live_index_name + '-pre-staged-original'
+      renamed = { source: { index: @live_index_name }, dest: { index: new_name } }
 
       # make a copy
-      es_client.reindex body: { source: { index: @live_index_name }, dest: { index: new_name } }
+      es_client.reindex refresh: true, wait_for_completion: true, body: renamed
 
       # make sure the copy exists before we delete the original
       tries = 0
       rename_ok = false
       while( tries < 10 ) do
-        es_client.indices.refresh index: new_name
+        es_client.indices.refresh index: new_name rescue false
         indices = es_client.indices.get_aliases.keys
         break if rename_ok = indices.include?(new_name)
         tries += 1
