@@ -1,6 +1,8 @@
+require 'securerandom'
+
 module Elasticsearch
   class IndexStager
-    VERSION = '1.0.0'
+    VERSION = '1.1.0'
 
     attr_reader :index_name, :es_client
 
@@ -33,13 +35,21 @@ module Elasticsearch
       # the renaming actions (performed atomically by ES)
       rename_actions = [ 
         { remove: { index: stage_aliased_to, alias: stage_index_name } },
-        {    add: { index: stage_index_name, alias: @live_index_name } } 
+        {    add: { index: stage_aliased_to, alias: @live_index_name } } 
       ]   
 
       # zap any existing index known as index_name,
       # but do it conditionally since it is reasonable that it does not exist.
       to_delete = []
-      existing_live_index = es_client.indices.get_aliases(index: @live_index_name)
+      live_index_exists = false
+      begin
+        existing_live_index = es_client.indices.get_alias(index: @live_index_name, name: '*')
+        live_index_exists = true
+      rescue Elasticsearch::Transport::Transport::Errors::NotFound => _err
+        existing_live_index = {}
+      rescue => _err
+        raise _err
+      end
       existing_live_index.each do |k,v|
 
         # if the index is merely aliased, remove its alias as part of the aliasing transaction.
@@ -50,11 +60,16 @@ module Elasticsearch
           to_delete.push k
 
         else
-          # this is a real, unaliased index with this name, so it must be deleted.
-          # (This usually happens the first time we implement the aliasing scheme against
-          # an existing installation.)
-          es_client.indices.delete index: @live_index_name rescue false
+          raise "Found existing index called #{@live_index_name} aliased to itself"
         end
+      end
+
+      if live_index_exists
+        new_name = @live_index_name + '-pre-staged-original'
+        # make a copy
+        es_client.reindex body: { source: { index: @live_index_name }, dest: { index: new_name } }
+        # delete the original
+        es_client.indices.delete index: @live_index_name rescue false
       end
 
       # re-alias
@@ -80,7 +95,7 @@ module Elasticsearch
 
     def find_newest_alias_for(the_index_name)
       aliased_to = nil
-      aliases = es_client.indices.get_aliases(index: the_index_name)
+      aliases = es_client.indices.get_alias(index: the_index_name, name: '*')
       aliases.each do |k,v|
         next unless k.match(tmp_index_pattern)
         aliased_to ||= k
