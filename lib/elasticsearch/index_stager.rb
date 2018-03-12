@@ -43,7 +43,7 @@ module Elasticsearch
       to_delete = []
       live_index_exists = false
       begin
-        existing_live_index = es_client.indices.get_aliases(index: @live_index_name, name: '*')
+        existing_live_index = es_client.indices.get_alias(index: @live_index_name, name: '*')
         live_index_exists = true
       rescue Elasticsearch::Transport::Transport::Errors::NotFound => _err
         existing_live_index = {}
@@ -95,7 +95,7 @@ module Elasticsearch
 
     def find_newest_alias_for(the_index_name)
       aliased_to = nil
-      aliases = es_client.indices.get_aliases(index: the_index_name, name: '*')
+      aliases = es_client.indices.get_alias(index: the_index_name, name: '*')
       aliases.each do |k,v|
         next unless k.match(tmp_index_pattern)
         aliased_to ||= k

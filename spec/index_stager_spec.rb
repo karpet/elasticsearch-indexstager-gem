@@ -3,8 +3,18 @@ require 'pp'
 
 describe Elasticsearch::IndexStager do
 
+  def delete_all_indices
+    indices = ESHelper.client.indices.get_aliases
+    pp indices
+    ESHelper.client.indices.delete(index: indices.keys) if indices.keys.any?
+  end
+
+  before(:each) do
+    delete_all_indices
+  end
+
   after(:each) do
-    ESHelper.client.indices.delete index: "articles_staged" rescue false
+    delete_all_indices
   end
 
   it "generates index names" do
@@ -15,7 +25,7 @@ describe Elasticsearch::IndexStager do
 
   it "stages an index" do
     stager = stage_index
-    aliases = ESHelper.client.indices.get_aliases(index: stager.stage_index_name)
+    aliases = ESHelper.client.indices.get_alias(index: stager.stage_index_name)
     expect(aliases.keys.size).to eq 1
     expect(aliases.keys[0]).to eq stager.tmp_index_name
   end
@@ -28,7 +38,7 @@ describe Elasticsearch::IndexStager do
     response = ESHelper.client.search(index: stager.index_name, body: { query: { match: { title: 'test' } } } )
     expect(response['hits']['total']).to eq 2
 
-    aliases = ESHelper.client.indices.get_aliases(index: stager.index_name) 
+    aliases = ESHelper.client.indices.get_alias(index: stager.index_name)
     expect(aliases.keys[0]).to eq stager.tmp_index_name
   end
 
@@ -38,13 +48,12 @@ describe Elasticsearch::IndexStager do
     stager.promote
     ESHelper.refresh(stager.index_name)
 
-    aliases = ESHelper.client.indices.get_aliases(index: stager.index_name, name: '*')
+    aliases = ESHelper.client.indices.get_alias(index: stager.index_name, name: '*')
     expect(aliases.keys[0]).to eq stager.tmp_index_name
 
     # the original was saved
     orig_name = stager.index_name + '-pre-staged-original'
-    resp = ESHelper.client.search(index: orig_name, body: { query: { match: { title: 'test' } } } )
-    expect(resp['hits']['total']).to eq 2
+    expect(ESHelper.client.indices.get_aliases.keys).to include(orig_name)
   end
 
   def create_index(index_name)
