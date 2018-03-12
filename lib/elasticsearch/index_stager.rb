@@ -64,24 +64,7 @@ module Elasticsearch
         end
       end
 
-      if live_index_exists
-        new_name = @live_index_name + '-pre-staged-original'
-
-        # make a copy
-        es_client.reindex body: { source: { index: @live_index_name }, dest: { index: new_name } }
-
-        # make sure the copy exists before we delete the original
-        tries = 0
-        while( tries < 10 ) do
-          indices = ESHelper.client.indices.get_aliases.keys
-          break if indices.include?(new_name)
-          tries += 1
-          sleep(1)
-        end
-
-        # delete the original
-        es_client.indices.delete index: @live_index_name rescue false
-      end
+      rename_live_index if live_index_exists
 
       # re-alias
       es_client.indices.update_aliases body: { actions: rename_actions }
@@ -93,6 +76,28 @@ module Elasticsearch
     end
 
     private
+
+    def rename_live_index
+      new_name = @live_index_name + '-pre-staged-original'
+
+      # make a copy
+      es_client.reindex body: { source: { index: @live_index_name }, dest: { index: new_name } }
+
+      # make sure the copy exists before we delete the original
+      tries = 0
+      rename_ok = false
+      while( tries < 10 ) do
+        es_client.indices.refresh index: new_name
+        indices = es_client.indices.get_aliases.keys
+        break if rename_ok = indices.include?(new_name)
+        tries += 1
+        sleep(1)
+      end
+      raise "Failed to rename #{@live_index_name} -> #{new_name}" unless rename_ok
+
+      # delete the original
+      es_client.indices.delete index: @live_index_name
+    end
 
     def tmp_index_pattern
       /#{index_name}_(\d{14})-\w{8}$/
